@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CKD Prediction System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>CKD Prediction System</h1>
+      <div class="grid-container">
+        <div class="form-container">
+          <h2><b>Medical Parameter Assessment</b></h2>
+
+          <!-- Progress Bar -->
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+
+          <!-- Step Counter -->
+          <div class="step-counter" id="step-counter">
+            Step 1 of {{ features|length }}
+          </div>
+
+          <form id="ckd-form">
+            {% for feature in features %}
+            <div
+              class="form-group"
+              style="display: none"
+              data-step="{{ loop.index0 }}"
+            >
+              <label for="{{ feature }}">
+                <strong>{{ feature|replace('_', ' ')|title }}</strong>
+                {% if feature_fullforms.get(feature) %}
+                <span style="color: #7f8c8d"
+                  >({{ feature_fullforms[feature] }})</span
+                >
+                {% endif %}
+              </label>
+
+              {% if feature in ['htn', 'dm', 'cad', 'ane'] %}
+              <select id="{{ feature }}" name="{{ feature }}" required>
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+              </select>
+              {% elif feature == 'appet' %}
+              <select id="{{ feature }}" name="{{ feature }}" required>
+                <option value="1">Good</option>
+                <option value="0">Poor</option>
+              </select>
+              {% else %}
+              <input
+                type="number"
+                step="any"
+                id="{{ feature }}"
+                name="{{ feature }}"
+                class="input-validation"
+                required
+                placeholder="Enter value..."
+              />
+              {% endif %} {% if feature_ranges.get(feature) %}
+              <small style="color: #95a5a6"
+                >Range: {{ feature_ranges[feature] }}</small
+              >
+              {% endif %} {% if feature_descriptions.get(feature) %}
+              <div class="feature-description">
+                💡 {{ feature_descriptions[feature] }}
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="navigation">
+              <button type="button" id="prev-btn" style="display: none">
+                ← Previous
+              </button>
+              <button type="button" id="next-btn">Next →</button>
+              <button type="button" id="predict-btn" style="display: none">
+                🔍 Analyze Results
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="result-container">
+          <h2><b>Prediction Results</b></h2>
+          <div id="result" class="result">
+            <p style="color: #7f8c8d; text-align: center">
+              Complete the assessment to see your results
+            </p>
+          </div>
+          <canvas id="resultChart"></canvas>
+
+          <div class="reference-ranges">
+            <h4><b>Risk Level Guide:</b></h4>
+            <br />
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; align-items: center; gap: 10px">
+                <div
+                  style="
+                    width: 20px;
+                    height: 20px;
+                    background: #27ae60;
+                    border-radius: 50%;
+                  "
+                ></div>
+                <span
+                  ><strong>Low Risk (0-30%):</strong> Normal kidney
+                  function</span
+                >
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px">
+                <div
+                  style="
+                    width: 20px;
+                    height: 20px;
+                    background: #f39c12;
+                    border-radius: 50%;
+                  "
+                ></div>
+                <span
+                  ><strong>Moderate Risk (30-70%):</strong> Consult healthcare
+                  provider</span
+                >
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px">
+                <div
+                  style="
+                    width: 20px;
+                    height: 20px;
+                    background: #e74c3c;
+                    border-radius: 50%;
+                  "
+                ></div>
+                <span
+                  ><strong>High Risk (70-100%):</strong> Seek immediate medical
+                  attention</span
+                >
+              </div>
+            </div>
+
+            {% if model_performance %}
+            <div class="model-info">
+              <strong>Model Accuracy:</strong> {{ model_performance.accuracy *
+              100 | round(1) }}%<br />
+              <strong>Reliability:</strong>
+              {% if model_performance.accuracy > 0.9 %} High {% else %} Good {%
+              endif %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  </body>
+</html>
